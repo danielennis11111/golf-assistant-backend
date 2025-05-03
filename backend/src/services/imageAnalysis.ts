@@ -447,6 +447,9 @@ export async function analyzeImage(imagePath: string, parameters?: AnalysisParam
   try {
     console.log('Starting image analysis for file:', imagePath);
     
+    // Initialize Vision client first
+    visionClient = await initializeVisionClient();
+    
     // Verify the image file exists
     if (!fs.existsSync(imagePath)) {
       throw new Error(`Image file not found at path: ${imagePath}`);
@@ -475,7 +478,7 @@ export async function analyzeImage(imagePath: string, parameters?: AnalysisParam
       };
 
       console.log('Sending request to Vision API...');
-      const [visionResult] = await visionClient!.annotateImage(request);
+      const [visionResult] = await visionClient.annotateImage(request);
 
       if (!visionResult) {
         throw new Error('No analysis result received from Google Cloud Vision');

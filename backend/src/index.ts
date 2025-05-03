@@ -21,7 +21,8 @@ const port = parseInt(process.env.PORT || '3001', 10);
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:3000',
   'http://localhost:3002',
-  'https://golf-assistant.surge.sh'
+  'https://golf-assistant.surge.sh',
+  'https://ai-golf-assistant.surge.sh'
 ];
 
 // Middleware
@@ -37,7 +38,7 @@ app.use(express.json());
 app.use('/api/image-analysis', imageAnalysisRouter);
 
 // Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
+app.get('/api/health', (req: Request, res: Response) => {
   res.json({ 
     status: 'ok',
     environment: process.env.NODE_ENV,
