@@ -12,6 +12,12 @@ export interface ImageAnalysisResult {
   recommendation: ClubRecommendation;
 }
 
+export interface AnalysisParameters {
+  age?: number;
+  windSpeed?: number;
+  windDirection?: 'none' | 'headwind' | 'tailwind';
+}
+
 export interface Point {
   x: number;
   y: number;
