@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
-import { analyzeImage } from '../services/imageAnalysis';
-import { ImageAnalysisResult, AnalysisParameters } from '../types/imageAnalysis';
+import { analyzeImage } from '../services/imageAnalysis.js';
+import { ImageAnalysisResult, AnalysisParameters } from '../types/imageAnalysis.js';
 import os from 'os';
 import path from 'path';
 
