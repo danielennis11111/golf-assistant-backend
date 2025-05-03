@@ -1,7 +1,32 @@
+export interface PuttingAnalysis {
+  distance: number;  // Distance in feet
+  slope: {
+    direction: 'left' | 'right' | 'uphill' | 'downhill' | 'flat';
+    degree: number;  // Slope degree 0-10
+  };
+  breakLine: {
+    direction: 'left' | 'right';
+    intensity: 'slight' | 'moderate' | 'strong';
+  };
+  recommendedPath: {
+    aimPoint: {
+      direction: 'left' | 'right';
+      inches: number;
+    };
+    speed: 'soft' | 'medium' | 'firm';
+    breakDescription: string;
+  };
+}
+
 export interface ClubRecommendation {
   club: string;
   confidence: number;
   reasoning: string;
+  trajectory: {
+    height: 'high' | 'normal' | 'low';
+    shape: 'fade' | 'straight' | 'draw';
+  };
+  puttingAnalysis?: PuttingAnalysis;  // Only present for putting shots
 }
 
 export interface ImageAnalysisResult {

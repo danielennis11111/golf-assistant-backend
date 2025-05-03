@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import './ClubSelector.css';
 import { ImageAnalysisResult } from '../types/imageAnalysis';
+import path from 'path';
 
 const API_URL = process.env.NODE_ENV === 'production' 
   ? 'https://golf-assistant-backend.onrender.com'
@@ -194,6 +195,48 @@ export const ClubSelector: React.FC<ClubSelectorProps> = ({
           <div className="recommendation-card">
             <div className="club-name">{analysisResult.recommendation.club}</div>
             <p className="club-description">{analysisResult.recommendation.reasoning}</p>
+            
+            {analysisResult.recommendation.puttingAnalysis && (
+              <div className="putting-analysis">
+                <div className="putting-details">
+                  <div className="putting-detail">
+                    <span className="label">Break Direction:</span>
+                    <span className="value">{analysisResult.recommendation.puttingAnalysis.breakLine.direction}</span>
+                  </div>
+                  <div className="putting-detail">
+                    <span className="label">Break Intensity:</span>
+                    <span className="value">{analysisResult.recommendation.puttingAnalysis.breakLine.intensity}</span>
+                  </div>
+                  <div className="putting-detail">
+                    <span className="label">Speed:</span>
+                    <span className="value">{analysisResult.recommendation.puttingAnalysis.recommendedPath.speed}</span>
+                  </div>
+                </div>
+                
+                {(analysisResult as any).puttingPathImage && (
+                  <div className="putting-path-image">
+                    <img 
+                      src={`${API_URL}/uploads/${path.basename((analysisResult as any).puttingPathImage)}`}
+                      alt="Recommended putting path"
+                      className="path-overlay"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {!analysisResult.recommendation.puttingAnalysis && (
+              <div className="trajectory-info">
+                <div className="trajectory-detail">
+                  <span className="label">Height:</span>
+                  <span className="value">{analysisResult.recommendation.trajectory.height}</span>
+                </div>
+                <div className="trajectory-detail">
+                  <span className="label">Shape:</span>
+                  <span className="value">{analysisResult.recommendation.trajectory.shape}</span>
+                </div>
+              </div>
+            )}
             
             {localAge > 50 && (
               <div className="age-note">

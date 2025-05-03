@@ -247,6 +247,87 @@
   border-radius: 4px;
 }
 
+.trajectory-info {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.trajectory-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.trajectory-detail .label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trajectory-detail .value {
+  font-size: 1.1rem;
+  color: #2c3e50;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.putting-analysis {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.putting-details {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.putting-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 120px;
+}
+
+.putting-detail .label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.putting-detail .value {
+  font-size: 1.1rem;
+  color: #2c3e50;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.putting-path-image {
+  margin-top: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.path-overlay {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 @media (min-width: 768px) {
   .club-selector {
     max-width: 800px;
