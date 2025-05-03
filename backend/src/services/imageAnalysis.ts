@@ -9,16 +9,27 @@ type Landmark = protos.google.cloud.vision.v1.IEntityAnnotation;
 // Initialize the Google Cloud Vision client with credentials
 let visionClient: ImageAnnotatorClient;
 try {
+  console.log('Current NODE_ENV:', process.env.NODE_ENV);
+  
   if (process.env.NODE_ENV === 'production') {
     // In production, use credentials from environment variable
+    console.log('Initializing Google Cloud Vision client in production mode');
+    
     if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
       throw new Error('Google Cloud Vision credentials not found in environment variables');
     }
     
-    const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-    visionClient = new ImageAnnotatorClient({ credentials });
+    try {
+      const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+      console.log('Successfully parsed credentials JSON');
+      visionClient = new ImageAnnotatorClient({ credentials });
+    } catch (parseError) {
+      console.error('Error parsing credentials JSON:', parseError);
+      throw new Error('Failed to parse Google Cloud Vision credentials');
+    }
   } else {
     // In development, use local key file
+    console.log('Initializing Google Cloud Vision client in development mode');
     const keyFilePath = path.join(__dirname, '../../../server/keys/fabled-decker-458700-r9-717596d45345.json');
     
     if (!fs.existsSync(keyFilePath)) {
