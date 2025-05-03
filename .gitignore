@@ -39,3 +39,9 @@ server/keys/*.json
 
 # Misc
 *.pem
+
+# Backend
+backend/dist/
+backend/node_modules/
+backend/uploads/
+backend/.env
