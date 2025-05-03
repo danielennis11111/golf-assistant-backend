@@ -1,0 +1,176 @@
+import React, { useState, useCallback } from 'react';
+import './ClubSelector.css';
+import { ImageAnalysisResult } from '../types/imageAnalysis';
+
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://golf-assistant-backend.onrender.com'
+  : 'http://localhost:3001';
+
+interface ClubSelectorProps {
+  age?: number;
+  windSpeed?: number;
+  windDirection?: 'none' | 'headwind' | 'tailwind';
+  onAnalysisComplete?: (result: ImageAnalysisResult) => void;
+}
+
+interface ErrorDetails {
+  message: string;
+  details?: string;
+  timestamp?: string;
+}
+
+export const ClubSelector: React.FC<ClubSelectorProps> = ({
+  age = 25,
+  windSpeed = 0,
+  windDirection = 'none',
+  onAnalysisComplete
+}) => {
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<ErrorDetails | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<ImageAnalysisResult | null>(null);
+  const [localAge, setLocalAge] = useState(age);
+  const [localWindSpeed, setLocalWindSpeed] = useState(windSpeed);
+  const [localWindDirection, setLocalWindDirection] = useState(windDirection);
+
+  const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setIsAnalyzing(true);
+      setAnalysisError(null);
+      setAnalysisResult(null);
+
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('age', localAge.toString());
+      formData.append('windSpeed', localWindSpeed.toString());
+      formData.append('windDirection', localWindDirection);
+
+      try {
+        const response = await fetch(`${API_URL}/api/image-analysis/analyze`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to analyze image');
+        }
+
+        if (!data) {
+          throw new Error('No data received from server');
+        }
+
+        setAnalysisResult(data);
+        if (onAnalysisComplete) {
+          onAnalysisComplete(data);
+        }
+      } catch (error) {
+        console.error('Error analyzing image:', error);
+        setAnalysisError({
+          message: 'Failed to analyze image. Please try again.',
+          details: error instanceof Error ? error.message : 'Unknown error occurred',
+          timestamp: new Date().toISOString()
+        });
+      } finally {
+        setIsAnalyzing(false);
+      }
+    }
+  }, [onAnalysisComplete, localAge, localWindSpeed, localWindDirection]);
+
+  return (
+    <div className="club-selector">
+      <header className="app-header">
+        <h1>Golf Assistant Pro</h1>
+        <p className="subtitle">AI-powered club recommendations</p>
+      </header>
+
+      <div className="main-upload-section">
+        <div className="upload-container">
+          <div className="upload-content">
+            <h2>Analyze Your Shot</h2>
+            <p>Take a photo of your course position to get AI-powered club recommendations</p>
+            
+            <div className="parameters-section">
+              <div className="parameter-group">
+                <label htmlFor="age">Age:</label>
+                <input
+                  type="number"
+                  id="age"
+                  value={localAge}
+                  onChange={(e) => setLocalAge(Number(e.target.value))}
+                  min="0"
+                  max="120"
+                />
+              </div>
+              
+              <div className="parameter-group">
+                <label htmlFor="windSpeed">Wind Speed (mph):</label>
+                <input
+                  type="number"
+                  id="windSpeed"
+                  value={localWindSpeed}
+                  onChange={(e) => setLocalWindSpeed(Number(e.target.value))}
+                  min="0"
+                  max="50"
+                />
+              </div>
+              
+              <div className="parameter-group">
+                <label htmlFor="windDirection">Wind Direction:</label>
+                <select
+                  id="windDirection"
+                  value={localWindDirection}
+                  onChange={(e) => setLocalWindDirection(e.target.value as 'none' | 'headwind' | 'tailwind')}
+                >
+                  <option value="none">None</option>
+                  <option value="headwind">Headwind</option>
+                  <option value="tailwind">Tailwind</option>
+                </select>
+              </div>
+            </div>
+
+            <label htmlFor="course-image" className="upload-button">
+              {isAnalyzing ? 'Analyzing...' : 'Take Photo / Upload Image'}
+              <input
+                type="file"
+                id="course-image"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="image-input"
+              />
+            </label>
+            {imageFile && <p className="file-name">Selected: {imageFile.name}</p>}
+            {analysisError && (
+              <div className="error">
+                <p>{analysisError.message}</p>
+                {analysisError.details && (
+                  <p className="error-details">Details: {analysisError.details}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {analysisResult && (
+        <div className="results-section">
+          <div className="recommendation-card">
+            <div className="club-name">{analysisResult.recommendation.club}</div>
+            <p className="club-description">{analysisResult.recommendation.reasoning}</p>
+            
+            {localAge > 50 && (
+              <div className="age-note">
+                Note: This recommendation has been adjusted for your age group.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ClubSelector; 

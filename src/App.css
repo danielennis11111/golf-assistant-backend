@@ -1,5 +1,11 @@
 .App {
   text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
 }
 
 .App-logo {
@@ -14,18 +20,202 @@
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  background-color: white;
+  padding: 2rem;
+  color: #076652;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.App-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #076652;
+}
+
+.App-header p {
+  margin: 0.5rem 0 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+  color: #076652;
+}
+
+.App-main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: white;
+}
+
+.player-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.settings-group {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.settings-group label {
+  display: block;
+  margin-bottom: 1rem;
+  color: #076652;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.age-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.age-button {
+  padding: 0.75rem 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+  color: black;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.age-button:hover {
+  background: white;
+  border-color: #076652;
+}
+
+.age-button.active {
+  background: #076652;
+  color: white;
+  border-color: #076652;
+}
+
+.wind-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.wind-speed {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 0.5rem;
 }
 
-.App-link {
-  color: #61dafb;
+.wind-speed input[type="range"] {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  -webkit-appearance: none;
+  background: #dee2e6;
+  border-radius: 3px;
+  outline: none;
+}
+
+.wind-speed input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #1a5f7a;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.wind-speed input[type="range"]::-webkit-slider-thumb:hover {
+  background: #164d63;
+}
+
+.wind-speed-value {
+  font-size: 1.2rem;
+  color: black;
+  font-weight: 500;
+}
+
+.wind-direction-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.wind-button {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+  color: black;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 100px;
+  max-width: 150px;
+}
+
+.wind-button:hover {
+  background: white;
+  border-color: #076652;
+}
+
+.wind-button.active {
+  background: #076652;
+  color: white;
+  border-color: #076652;
+}
+
+.App-footer {
+  margin-top: auto;
+  padding: 1rem;
+  background: white;
+  color: #076652;
+  font-size: 0.8rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.App-footer p {
+  margin: 0;
+  opacity: 1;
+  color: #076652;
+}
+
+@media (max-width: 768px) {
+  .App-header {
+    padding: 1.5rem;
+  }
+
+  .App-header h1 {
+    font-size: 2rem;
+  }
+
+  .App-main {
+    padding: 1rem;
+  }
+
+  .settings-group {
+    padding: 1rem;
+  }
+
+  .age-button,
+  .wind-button {
+    min-width: calc(50% - 0.5rem);
+    padding: 0.5rem 1rem;
+  }
 }
 
 @keyframes App-logo-spin {
