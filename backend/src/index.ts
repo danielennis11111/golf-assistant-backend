@@ -14,10 +14,12 @@ const port = process.env.PORT || 3001;
 app.use(cors({
   origin: [
     'https://ai-golf-assistant.surge.sh',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'https://golf-assistant-pro.onrender.com'
   ],
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 app.use(express.json());

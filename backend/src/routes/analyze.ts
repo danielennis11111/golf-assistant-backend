@@ -1,75 +1,83 @@
 import express from 'express';
-import { ImageAnnotatorClient } from '@google-cloud/vision';
+import multer from 'multer';
+import { analyzeImage } from '../services/imageAnalysis';
+import { ImageAnalysisResult } from '../types/imageAnalysis';
+import os from 'os';
+import path from 'path';
 import fs from 'fs';
 
 const router = express.Router();
 
-// Initialize the Vision client with credentials from environment variable
-const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON 
-  ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-  : undefined;
-
-const vision = new ImageAnnotatorClient({
-  credentials: credentials
+// Configure multer for image upload
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(os.tmpdir(), 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
 });
 
-router.post('/', async (req, res) => {
-  try {
-    const { filePath } = req.body;
+const upload = multer({ 
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      cb(new Error('Only image files are allowed'));
+      return;
+    }
+    cb(null, true);
+  }
+});
 
-    if (!filePath) {
-      return res.status(400).json({ error: 'No file path provided' });
+router.post('/analyze', upload.single('image'), async (req, res) => {
+  console.log('Received image upload request');
+  
+  try {
+    if (!req.file) {
+      console.log('No file received in request');
+      return res.status(400).json({ error: 'No image file provided' });
     }
 
-    // Read the image file
-    const imageFile = fs.readFileSync(filePath);
-
-    // Perform the analysis with Google Vision AI
-    const [result] = await vision.objectLocalization({
-      image: { content: imageFile.toString('base64') }
+    console.log('File received:', {
+      filename: req.file.filename,
+      path: req.file.path,
+      size: req.file.size,
+      mimetype: req.file.mimetype
     });
 
-    const objects = result.localizedObjectAnnotations || [];
+    const result = await analyzeImage(req.file.path);
+    console.log('Analysis completed successfully:', result);
     
-    // Analyze the image for golf-related objects
-    const golfObjects = objects.filter(obj => {
-      const name = obj.name?.toLowerCase() || '';
-      return name.includes('golf') || 
-             name.includes('club') || 
-             name.includes('ball') ||
-             name.includes('person');
-    });
-
     // Clean up the uploaded file
-    fs.unlink(filePath, (err) => {
+    fs.unlink(req.file.path, (err) => {
       if (err) console.error('Error deleting file:', err);
     });
 
-    // Process the results
-    const analysis = {
-      club: 'unknown',
-      confidence: 0,
-      distance: 0,
-      swingSpeed: 0,
-      trajectory: {
-        height: 'medium',
-        shape: 'straight'
-      }
-    };
-
-    // Update analysis based on detected objects
-    if (golfObjects.length > 0) {
-      const golfClub = golfObjects.find(obj => obj.name?.toLowerCase().includes('club'));
-      if (golfClub) {
-        analysis.club = golfClub.name || 'unknown';
-        analysis.confidence = golfClub.score || 0;
-      }
-    }
-
-    res.json(analysis);
-  } catch (error) {
-    console.error('Analysis error:', error);
-    res.status(500).json({ error: 'Error analyzing image' });
+    res.json(result);
+  } catch (error: any) {
+    console.error('Analysis error:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      code: error.code
+    });
+    
+    res.status(500).json({ 
+      error: 'Failed to analyze image',
+      details: process.env.NODE_ENV === 'development' ? {
+        message: error.message,
+        code: error.code,
+        name: error.name
+      } : undefined
+    });
   }
 });
 

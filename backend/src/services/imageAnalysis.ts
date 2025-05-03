@@ -9,9 +9,13 @@ type Landmark = protos.google.cloud.vision.v1.IEntityAnnotation;
 let visionClient: ImageAnnotatorClient | null = null;
 
 async function initializeVisionClient(): Promise<ImageAnnotatorClient> {
-  if (visionClient) return visionClient;
+  if (visionClient) {
+    console.log('Using existing Vision client');
+    return visionClient;
+  }
 
   try {
+    console.log('Initializing new Vision client...');
     console.log('Current NODE_ENV:', process.env.NODE_ENV);
     console.log('Available environment variables:', Object.keys(process.env).filter(key => key.includes('GOOGLE')));
     console.log('Credentials present:', !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
@@ -26,10 +30,15 @@ async function initializeVisionClient(): Promise<ImageAnnotatorClient> {
 
     try {
       const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+      console.log('Successfully parsed credentials JSON');
       
       // Verify credentials structure
       if (!credentials.project_id || !credentials.private_key || !credentials.client_email) {
-        console.log('Invalid credential structure. Missing required fields.');
+        console.log('Invalid credential structure. Missing required fields:', {
+          hasProjectId: !!credentials.project_id,
+          hasPrivateKey: !!credentials.private_key,
+          hasClientEmail: !!credentials.client_email
+        });
         throw new Error('Invalid credentials structure');
       }
 
@@ -53,17 +62,23 @@ async function initializeVisionClient(): Promise<ImageAnnotatorClient> {
 
 export async function analyzeImage(imagePath: string): Promise<ImageAnalysisResult> {
   try {
+    console.log('Starting image analysis for:', imagePath);
     const client = await initializeVisionClient();
     
     // Read the image file
+    console.log('Reading image file...');
     const imageContent = await fs.promises.readFile(imagePath);
+    console.log('Image file read successfully, size:', imageContent.length);
     
     // Perform label detection
+    console.log('Performing label detection...');
     const [result] = await client.labelDetection!({
       image: { content: imageContent }
     });
+    console.log('Label detection completed');
 
     const labels = result.labelAnnotations || [];
+    console.log('Detected labels:', labels.map(l => l.description).join(', '));
     
     // Extract golf-related information
     const golfLabels = labels.filter(label => 
@@ -71,13 +86,17 @@ export async function analyzeImage(imagePath: string): Promise<ImageAnalysisResu
       label.description?.toLowerCase().includes('club') ||
       label.description?.toLowerCase().includes('course')
     );
+    console.log('Golf-related labels:', golfLabels.map(l => l.description).join(', '));
 
     // Analyze the scene
+    console.log('Performing object localization...');
     const [objectResult] = await client.objectLocalization!({
       image: { content: imageContent }
     });
+    console.log('Object localization completed');
 
     const objects = objectResult.localizedObjectAnnotations || [];
+    console.log('Detected objects:', objects.map(o => o.name).join(', '));
     
     // Determine club type and confidence
     const club = determineClub(golfLabels, objects);
@@ -85,6 +104,14 @@ export async function analyzeImage(imagePath: string): Promise<ImageAnalysisResu
     const distance = estimateDistance(objects);
     const terrain = analyzeTerrain(labels);
     const elevation = estimateElevation(labels);
+
+    console.log('Analysis results:', {
+      club,
+      confidence,
+      distance,
+      terrain,
+      elevation
+    });
 
     return {
       club,
@@ -98,8 +125,12 @@ export async function analyzeImage(imagePath: string): Promise<ImageAnalysisResu
         reasoning: generateReasoning(club, confidence, distance)
       }
     };
-  } catch (error) {
-    console.error('Error analyzing image:', error);
+  } catch (error: any) {
+    console.error('Error in analyzeImage:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     throw error;
   }
 }
