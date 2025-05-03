@@ -35,48 +35,82 @@ export const ClubSelector: React.FC<ClubSelectorProps> = ({
 
   const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setIsAnalyzing(true);
-      setAnalysisError(null);
-      setAnalysisResult(null);
+    if (!file) return;
 
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('age', localAge.toString());
-      formData.append('windSpeed', localWindSpeed.toString());
-      formData.append('windDirection', localWindDirection);
+    // Validate file type
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!validImageTypes.includes(file.type)) {
+      setAnalysisError({
+        message: 'Invalid file type',
+        details: 'Please upload a JPEG or PNG image',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
 
-      try {
-        const response = await fetch(`${API_URL}/api/image-analysis/analyze`, {
-          method: 'POST',
-          body: formData,
-        });
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      setAnalysisError({
+        message: 'File too large',
+        details: 'Please upload an image smaller than 5MB',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
 
-        const data = await response.json();
+    setImageFile(file);
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setAnalysisResult(null);
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to analyze image');
-        }
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('age', localAge.toString());
+    formData.append('windSpeed', localWindSpeed.toString());
+    formData.append('windDirection', localWindDirection);
 
-        if (!data) {
-          throw new Error('No data received from server');
-        }
+    try {
+      const response = await fetch(`${API_URL}/api/image-analysis/analyze`, {
+        method: 'POST',
+        body: formData,
+      });
 
-        setAnalysisResult(data);
-        if (onAnalysisComplete) {
-          onAnalysisComplete(data);
-        }
-      } catch (error) {
-        console.error('Error analyzing image:', error);
-        setAnalysisError({
-          message: 'Failed to analyze image. Please try again.',
-          details: error instanceof Error ? error.message : 'Unknown error occurred',
-          timestamp: new Date().toISOString()
-        });
-      } finally {
-        setIsAnalyzing(false);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to analyze image');
       }
+
+      if (!data) {
+        throw new Error('No data received from server');
+      }
+
+      setAnalysisResult(data);
+      if (onAnalysisComplete) {
+        onAnalysisComplete(data);
+      }
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      let errorMessage = 'Failed to analyze image. Please try again.';
+      let errorDetails = 'Unknown error occurred';
+
+      if (error instanceof Error) {
+        if (error.message.includes('pattern')) {
+          errorMessage = 'Invalid image format';
+          errorDetails = 'Please ensure the image is a valid JPEG or PNG file and try again';
+        } else {
+          errorDetails = error.message;
+        }
+      }
+
+      setAnalysisError({
+        message: errorMessage,
+        details: errorDetails,
+        timestamp: new Date().toISOString()
+      });
+    } finally {
+      setIsAnalyzing(false);
     }
   }, [onAnalysisComplete, localAge, localWindSpeed, localWindDirection]);
 
