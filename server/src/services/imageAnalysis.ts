@@ -1,23 +1,37 @@
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import * as tf from '@tensorflow/tfjs-node';
 import sharp from 'sharp';
-import { ImageAnalysisResult, Point, DepthMap, TerrainAnalysis } from '../types/imageAnalysis';
+import { ImageAnalysisResult, Point, DepthMap, TerrainAnalysis, TerrainType } from '../types/imageAnalysis';
 
-let visionClient: ImageAnnotatorClient;
+let visionClient: ImageAnnotatorClient | null = null;
 
+// Initialize Vision API client
 try {
-  // First try to use application default credentials
+  console.log('Attempting to initialize Vision API client with application default credentials...');
   visionClient = new ImageAnnotatorClient();
+  console.log('Successfully initialized Vision API client with application default credentials');
 } catch (error) {
-  // If that fails, try to use credentials from environment variables
-  const credentials = process.env.GOOGLE_CLOUD_CREDENTIALS
-    ? JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS)
-    : undefined;
+  console.log('Failed to initialize with application default credentials, trying environment variables...');
+  try {
+    const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+    if (!credentials) {
+      throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set');
+    }
+    
+    const parsedCredentials = JSON.parse(credentials);
+    if (!parsedCredentials.project_id) {
+      throw new Error('Invalid credentials: missing project_id');
+    }
 
-  visionClient = new ImageAnnotatorClient({
-    credentials,
-    projectId: process.env.GOOGLE_CLOUD_PROJECT
-  });
+    visionClient = new ImageAnnotatorClient({
+      credentials: parsedCredentials,
+      projectId: parsedCredentials.project_id
+    });
+    console.log('Successfully initialized Vision API client with credentials from environment');
+  } catch (error) {
+    console.error('Failed to initialize Vision API client:', error);
+    // Don't throw here - let individual requests fail if the client isn't initialized
+  }
 }
 
 async function estimateDepthMap(imagePath: string): Promise<DepthMap> {
@@ -82,13 +96,13 @@ async function analyzeTerrain(depthMap: DepthMap): Promise<TerrainAnalysis> {
   const averageRoughness = totalRoughness / depthMap.points.length;
 
   // Determine terrain type based on slope and roughness
-  let type = 'flat';
-  if (maxSlope > 0.3) type = 'hilly';
-  if (averageRoughness > 0.1) type = 'rough';
-  if (maxSlope > 0.3 && averageRoughness > 0.1) type = 'challenging';
+  let terrainType: TerrainType = 'flat';
+  if (maxSlope > 0.3) terrainType = 'hilly';
+  if (averageRoughness > 0.1) terrainType = 'rough';
+  if (maxSlope > 0.3 && averageRoughness > 0.1) terrainType = 'challenging';
 
   return {
-    type,
+    type: terrainType,
     slope: maxSlope,
     roughness: averageRoughness
   };
@@ -216,7 +230,12 @@ function generateClubRecommendations(
 
 export async function analyzeImage(imagePath: string): Promise<ImageAnalysisResult> {
   try {
+    if (!visionClient) {
+      throw new Error('Vision API client is not initialized. Check your credentials configuration.');
+    }
+
     // Analyze image with Google Cloud Vision
+    console.log('Starting image analysis with Vision API...');
     const [result] = await visionClient.annotateImage({
       image: { source: { filename: imagePath } },
       features: [
@@ -225,6 +244,7 @@ export async function analyzeImage(imagePath: string): Promise<ImageAnalysisResu
         { type: 'TEXT_DETECTION' },
       ],
     });
+    console.log('Successfully received Vision API response');
 
     // Get depth map and terrain analysis
     const depthMap = await estimateDepthMap(imagePath);

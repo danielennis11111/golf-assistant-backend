@@ -1,39 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import multer from 'multer';
-import path from 'path';
 import { imageAnalysisRouter } from './routes/imageAnalysis';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
-
-// Configure multer for image upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ 
-  storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/heic'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      cb(new Error('Invalid file type'));
-      return;
-    }
-    cb(null, true);
-  },
-});
 
 // Middleware
 app.use(cors());

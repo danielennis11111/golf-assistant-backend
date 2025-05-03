@@ -69,31 +69,25 @@ Request:
 - Method: POST
 - Content-Type: multipart/form-data
 - Body:
-  - image: File (JPEG/PNG, max 10MB)
-  - age: number (optional)
-  - windSpeed: number (optional)
-  - windDirection: 'none' | 'headwind' | 'tailwind' (optional)
+  - image: File (JPEG/PNG/HEIC, max 10MB)
 
 Response:
 ```json
 {
-  "distance": number,
-  "elevation": number,
-  "confidence": number,
-  "terrain": string,
-  "recommendation": {
+  "terrain": {
+    "type": "flat" | "rough" | "hilly" | "challenging",
+    "slope": number,
+    "roughness": number
+  },
+  "recommendations": {
     "club": string,
     "confidence": number,
-    "reasoning": string,
-    "trajectory": {
-      "height": "high" | "normal" | "low",
-      "shape": "fade" | "straight" | "draw"
-    }
+    "reasoning": string
   }
 }
 ```
 
-### GET /health
+### GET /api/health
 Health check endpoint to verify server status.
 
 Response:
@@ -114,9 +108,7 @@ The API returns appropriate HTTP status codes:
 All errors include a JSON response with:
 ```json
 {
-  "error": string,
-  "details": string,
-  "timestamp": string
+  "error": string
 }
 ```
 
