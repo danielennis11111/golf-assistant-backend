@@ -10,6 +10,12 @@ dotenv.config();
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
 
+console.log('Starting server with configuration:', {
+  port,
+  nodeEnv: process.env.NODE_ENV,
+  currentDir: process.cwd()
+});
+
 // Middleware
 app.use(cors({
   origin: [
@@ -42,46 +48,52 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // Start server
-async function startServer() {
-  try {
-    let server: Server | null = null;
+function startServer(): Promise<Server> {
+  return new Promise((resolve, reject) => {
+    try {
+      console.log(`Attempting to start server on port ${port}...`);
+      
+      const server = app
+        .listen(port, () => {
+          console.log(`Server successfully bound to port ${port}`);
+          console.log('Environment:', process.env.NODE_ENV);
+          const corsOptions = app.get('cors');
+          console.log('Allowed origins:', corsOptions ? corsOptions.origin : 'all');
+          resolve(server);
+        })
+        .on('error', (error: NodeJS.ErrnoException) => {
+          console.error('Server startup error:', error);
+          if (error.code === 'EADDRINUSE') {
+            console.error(`Port ${port} is already in use`);
+          }
+          reject(error);
+        });
 
-    // Create server with proper error handling
-    server = app.listen(port, '0.0.0.0', () => {
-      console.log(`Server running on port ${port}`);
-      console.log('Environment:', process.env.NODE_ENV);
-      const corsOptions = app.get('cors');
-      console.log('Allowed origins:', corsOptions ? corsOptions.origin : 'all');
-    });
+      // Additional error handling
+      process.on('uncaughtException', (error) => {
+        console.error('Uncaught Exception:', error);
+        process.exit(1);
+      });
 
-    // Handle server errors
-    server.on('error', (error: NodeJS.ErrnoException) => {
-      if (error.syscall !== 'listen') {
-        throw error;
-      }
+      process.on('unhandledRejection', (error) => {
+        console.error('Unhandled Rejection:', error);
+        process.exit(1);
+      });
 
-      switch (error.code) {
-        case 'EACCES':
-          console.error(`Port ${port} requires elevated privileges`);
-          process.exit(1);
-          break;
-        case 'EADDRINUSE':
-          console.error(`Port ${port} is already in use`);
-          process.exit(1);
-          break;
-        default:
-          throw error;
-      }
-    });
-
-    return server;
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
+    } catch (error) {
+      console.error('Error in server startup:', error);
+      reject(error);
+    }
+  });
 }
 
-startServer().catch(error => {
-  console.error('Failed to start server:', error);
-  process.exit(1);
-}); 
+// Start the server
+console.log('Initializing server...');
+startServer()
+  .then(() => {
+    console.log('Server started successfully');
+  })
+  .catch((error) => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }); 
