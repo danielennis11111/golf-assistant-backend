@@ -79,27 +79,29 @@ export async function analyzeImage(imagePath: string, parameters?: AnalysisParam
     }
 
     // Read the image file
-    const imageContent = fs.readFileSync(imagePath);
-    if (imageContent.length === 0) {
+    const imageBuffer = fs.readFileSync(imagePath);
+    if (imageBuffer.length === 0) {
       throw new Error('Image file is empty');
     }
 
-    console.log('Image size:', imageContent.length, 'bytes');
-    console.log('Image MIME type:', imageContent.slice(0, 4).toString('hex')); // Log first 4 bytes for MIME detection
+    console.log('Image size:', imageBuffer.length, 'bytes');
     console.log('Analyzing image with parameters:', parameters);
 
     try {
       // Analyze image with Google Cloud Vision
-      const [visionResult] = await visionClient.annotateImage({
+      const request = {
         image: {
-          content: imageContent.toString('base64')
+          content: imageBuffer
         },
         features: [
           { type: 'OBJECT_LOCALIZATION' },
           { type: 'LANDMARK_DETECTION' },
           { type: 'TEXT_DETECTION' }
         ]
-      });
+      };
+
+      console.log('Sending request to Vision API...');
+      const [visionResult] = await visionClient.annotateImage(request);
 
       if (!visionResult) {
         throw new Error('No analysis result received from Google Cloud Vision');

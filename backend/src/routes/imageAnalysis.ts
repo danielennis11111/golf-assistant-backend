@@ -25,10 +25,19 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
   fileFilter: (req, file, cb) => {
+    // Check file type
     if (!file.mimetype.startsWith('image/')) {
       cb(new Error('Only image files are allowed'));
       return;
     }
+
+    // Specifically check for JPEG and PNG
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      cb(new Error('Only JPEG and PNG images are allowed'));
+      return;
+    }
+
     cb(null, true);
   }
 });
@@ -50,15 +59,6 @@ router.post('/analyze', upload.single('image'), async (req, res) => {
       encoding: req.file.encoding
     });
 
-    // Validate file type
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-    if (!allowedMimeTypes.includes(req.file.mimetype)) {
-      return res.status(400).json({
-        error: 'Invalid file type',
-        details: `File type ${req.file.mimetype} is not supported. Please upload a JPEG or PNG image.`
-      });
-    }
-
     // Extract analysis parameters from request body
     const parameters: AnalysisParameters = {
       age: req.body.age ? parseInt(req.body.age) : undefined,
@@ -68,21 +68,11 @@ router.post('/analyze', upload.single('image'), async (req, res) => {
 
     console.log('Analysis parameters:', parameters);
 
-    const result: ImageAnalysisResult = await analyzeImage(req.file.path, parameters);
-    
-    // Clean up the temporary file
     try {
-      const fs = require('fs');
-      fs.unlinkSync(req.file.path);
-    } catch (cleanupError) {
-      console.error('Error cleaning up temporary file:', cleanupError);
-    }
-    
-    res.json(result);
-  } catch (error) {
-    console.error('Error analyzing image:', error);
-    // Clean up the temporary file even if analysis fails
-    if (req.file) {
+      const result: ImageAnalysisResult = await analyzeImage(req.file.path, parameters);
+      res.json(result);
+    } finally {
+      // Clean up the temporary file
       try {
         const fs = require('fs');
         fs.unlinkSync(req.file.path);
@@ -90,6 +80,19 @@ router.post('/analyze', upload.single('image'), async (req, res) => {
         console.error('Error cleaning up temporary file:', cleanupError);
       }
     }
+  } catch (error) {
+    console.error('Error analyzing image:', error);
+    
+    // Clean up the temporary file if it exists
+    if (req.file?.path) {
+      try {
+        const fs = require('fs');
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.error('Error cleaning up temporary file:', cleanupError);
+      }
+    }
+
     // Send more detailed error information
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({ 
