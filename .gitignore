@@ -45,3 +45,9 @@ backend/dist/
 backend/node_modules/
 backend/uploads/
 backend/.env
+backend/server/keys/
+*.json.key
+*.json.pub
+*.p12
+*.pem
+credentials.json
