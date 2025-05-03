@@ -6,18 +6,30 @@ import path from 'path';
 type LocalizedObject = protos.google.cloud.vision.v1.ILocalizedObjectAnnotation;
 type Landmark = protos.google.cloud.vision.v1.IEntityAnnotation;
 
-// Initialize the Google Cloud Vision client with credentials from key file
+// Initialize the Google Cloud Vision client with credentials
 let visionClient: ImageAnnotatorClient;
 try {
-  const keyFilePath = path.join(__dirname, '../../../server/keys/fabled-decker-458700-r9-717596d45345.json');
-  
-  if (!fs.existsSync(keyFilePath)) {
-    throw new Error(`Google Cloud Vision key file not found at: ${keyFilePath}`);
+  if (process.env.NODE_ENV === 'production') {
+    // In production, use credentials from environment variable
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+      throw new Error('Google Cloud Vision credentials not found in environment variables');
+    }
+    
+    visionClient = new ImageAnnotatorClient({
+      credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+    });
+  } else {
+    // In development, use local key file
+    const keyFilePath = path.join(__dirname, '../../../server/keys/fabled-decker-458700-r9-717596d45345.json');
+    
+    if (!fs.existsSync(keyFilePath)) {
+      throw new Error(`Google Cloud Vision key file not found at: ${keyFilePath}`);
+    }
+    
+    visionClient = new ImageAnnotatorClient({
+      keyFilename: keyFilePath
+    });
   }
-  
-  visionClient = new ImageAnnotatorClient({
-    keyFilename: keyFilePath
-  });
   
   console.log('Successfully initialized Google Cloud Vision client');
 } catch (error) {
