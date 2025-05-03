@@ -2,11 +2,18 @@
   "name": "golf-assistant",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "npm@10.2.4",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "description": "Golf Assistant Pro - AI-powered golf club recommendations",
   "main": "src/index.tsx",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -37,7 +44,8 @@
     "webpack-dev-server": "^5.0.2",
     "ts-loader": "^9.5.1",
     "css-loader": "^6.10.0",
-    "style-loader": "^3.3.4"
+    "style-loader": "^3.3.4",
+    "turbo": "^2.5.2"
   },
   "eslintConfig": {
     "extends": [

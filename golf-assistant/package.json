@@ -1,0 +1,34 @@
+{
+  "name": "golf-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Golf Assistant Pro - AI-powered golf club recommendations",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "keywords": [
+    "golf",
+    "ai",
+    "club-recommendation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "turbo": "^1.10.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielennis11111/golf-assistant.git"
+  }
+}

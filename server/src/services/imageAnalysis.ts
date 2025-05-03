@@ -7,31 +7,17 @@ let visionClient: ImageAnnotatorClient | null = null;
 
 // Initialize Vision API client
 try {
-  console.log('Attempting to initialize Vision API client with application default credentials...');
-  visionClient = new ImageAnnotatorClient();
-  console.log('Successfully initialized Vision API client with application default credentials');
-} catch (error) {
-  console.log('Failed to initialize with application default credentials, trying environment variables...');
-  try {
-    const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-    if (!credentials) {
-      throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set');
-    }
-    
-    const parsedCredentials = JSON.parse(credentials);
-    if (!parsedCredentials.project_id) {
-      throw new Error('Invalid credentials: missing project_id');
-    }
-
-    visionClient = new ImageAnnotatorClient({
-      credentials: parsedCredentials,
-      projectId: parsedCredentials.project_id
-    });
-    console.log('Successfully initialized Vision API client with credentials from environment');
-  } catch (error) {
-    console.error('Failed to initialize Vision API client:', error);
-    // Don't throw here - let individual requests fail if the client isn't initialized
+  console.log('Attempting to initialize Vision API client with credentials...');
+  const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (!credentialsPath) {
+    throw new Error('GOOGLE_APPLICATION_CREDENTIALS environment variable is not set');
   }
+
+  visionClient = new ImageAnnotatorClient();
+  console.log('Successfully initialized Vision API client');
+} catch (error) {
+  console.error('Failed to initialize Vision API client:', error);
+  // Don't throw here - let individual requests fail if the client isn't initialized
 }
 
 async function estimateDepthMap(imagePath: string): Promise<DepthMap> {
@@ -143,19 +129,10 @@ function generateExplanation(
   if (windSpeed > 0) {
     parts.push(windDirection === 'headwind'
       ? `facing a ${windSpeed} mph headwind`
-      : `with a ${windSpeed} mph tailwind`);
+      : `facing a ${windSpeed} mph tailwind`);
   }
 
-  // Age consideration
-  if (age > 50) {
-    parts.push(`considering your age group`);
-  }
-
-  // Join all parts with proper punctuation
-  const situation = parts.join(' ');
-
-  // Final recommendation
-  return `${situation}. Based on these conditions, I recommend using your ${recommendedClub} for the best chance of success.`;
+  return parts.join('. ');
 }
 
 function generateClubRecommendations(
@@ -248,18 +225,30 @@ export async function analyzeImage(imagePath: string): Promise<ImageAnalysisResu
 
     // Get depth map and terrain analysis
     const depthMap = await estimateDepthMap(imagePath);
-    const terrain = await analyzeTerrain(depthMap);
+    const terrainAnalysis = await analyzeTerrain(depthMap);
+
+    // Calculate distance using depth information
+    const averageDepth = depthMap.points.reduce((sum, point) => sum + point.z, 0) / depthMap.points.length;
+    const estimatedDistance = averageDepth * 100; // Convert to yards (approximate)
+
+    // Calculate elevation change
+    const minDepth = Math.min(...depthMap.points.map(p => p.z));
+    const maxDepth = Math.max(...depthMap.points.map(p => p.z));
+    const elevationChange = (maxDepth - minDepth) * 100; // Convert to feet (approximate)
+
+    // Generate recommendation
+    const recommendation = generateClubRecommendations(
+      estimatedDistance,
+      elevationChange,
+      terrainAnalysis
+    );
 
     return {
-      terrain,
-      recommendations: {
-        club: 'Driver',
-        confidence: 0.85,
-        reasoning: 'Based on initial analysis'
-      }
+      terrain: terrainAnalysis,
+      recommendations: recommendation
     };
   } catch (error) {
     console.error('Error in image analysis:', error);
     throw error;
   }
-} 
+}

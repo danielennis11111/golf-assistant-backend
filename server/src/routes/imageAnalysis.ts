@@ -37,11 +37,15 @@ router.post('/analyze', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'No image file provided' });
     }
 
+    console.log('Processing file:', req.file);
     const result: ImageAnalysisResult = await analyzeImage(req.file.path);
     res.json(result);
   } catch (error) {
     console.error('Error analyzing image:', error);
-    res.status(500).json({ error: 'Failed to analyze image' });
+    res.status(500).json({ 
+      error: 'Failed to analyze image',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
