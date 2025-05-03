@@ -26,10 +26,10 @@ This is the backend service for Golf Assistant Pro, providing image analysis and
 
    # Google Cloud Vision API Credentials
    # This should be a JSON string containing your service account credentials
-   GOOGLE_APPLICATION_CREDENTIALS_JSON=your-credentials-json-here
-
+   GOOGLE_APPLICATION_CREDENTIALS_JSON={"type": "service_account", "project_id": "your-project-id", ...}
+   
    # CORS Configuration - Include all development and production URLs
-   ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3002,https://golf-assistant.surge.sh
+   ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3002,https://ai-golf-assistant.surge.sh
    ```
 
    For Production:
@@ -39,10 +39,10 @@ This is the backend service for Golf Assistant Pro, providing image analysis and
    # PORT is typically provided by the hosting platform (e.g., Render.com)
 
    # Google Cloud Vision API Credentials
-   GOOGLE_APPLICATION_CREDENTIALS_JSON=your-credentials-json-here
+   GOOGLE_APPLICATION_CREDENTIALS_JSON={"type": "service_account", "project_id": "your-project-id", ...}
 
    # CORS Configuration - Only include your production frontend URL
-   ALLOWED_ORIGINS=https://golf-assistant.surge.sh
+   ALLOWED_ORIGINS=https://ai-golf-assistant.surge.sh
    ```
 
 ## Development
