@@ -2,12 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import { imageAnalysisRouter } from './routes/imageAnalysis.js';
 import dotenv from 'dotenv';
+import { Server } from 'http';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = parseInt(process.env.PORT || '3001', 10);
 
 // Middleware
 app.use(cors({
@@ -15,7 +16,9 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:3002',
     'https://golf-assistant.surge.sh'
-  ]
+  ],
+  methods: ['GET', 'POST'],
+  credentials: true
 }));
 
 app.use(express.json());
@@ -28,12 +31,57 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Start server
-try {
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    error: 'Internal server error',
+    details: err.message,
+    timestamp: new Date().toISOString()
   });
-} catch (error) {
+});
+
+// Start server
+async function startServer() {
+  try {
+    let server: Server | null = null;
+
+    // Create server with proper error handling
+    server = app.listen(port, '0.0.0.0', () => {
+      console.log(`Server running on port ${port}`);
+      console.log('Environment:', process.env.NODE_ENV);
+      const corsOptions = app.get('cors');
+      console.log('Allowed origins:', corsOptions ? corsOptions.origin : 'all');
+    });
+
+    // Handle server errors
+    server.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.syscall !== 'listen') {
+        throw error;
+      }
+
+      switch (error.code) {
+        case 'EACCES':
+          console.error(`Port ${port} requires elevated privileges`);
+          process.exit(1);
+          break;
+        case 'EADDRINUSE':
+          console.error(`Port ${port} is already in use`);
+          process.exit(1);
+          break;
+        default:
+          throw error;
+      }
+    });
+
+    return server;
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer().catch(error => {
   console.error('Failed to start server:', error);
   process.exit(1);
-} 
+}); 
