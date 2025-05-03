@@ -1,13 +1,19 @@
 import React from 'react';
-import { ClubSelector } from './components/ClubSelector';
+import ClubSelector from './components/ClubSelector';
 import './App.css';
 
-const App: React.FC = () => {
+function App() {
   return (
     <div className="App">
-      <ClubSelector />
+      <header className="App-header">
+        <h1>Golf Assistant Pro</h1>
+        <p className="subtitle">AI-powered club recommendations</p>
+      </header>
+      <main>
+        <ClubSelector />
+      </main>
     </div>
   );
-};
+}
 
 export default App; 

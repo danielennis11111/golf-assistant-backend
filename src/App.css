@@ -1,11 +1,7 @@
 .App {
   text-align: center;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: #f5f5f5;
+  background: #f0f2f5;
 }
 
 .App-logo {
@@ -20,34 +16,28 @@
 }
 
 .App-header {
-  background-color: white;
+  background: #fff;
   padding: 2rem;
-  color: #076652;
-  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
 }
 
 .App-header h1 {
   margin: 0;
+  color: #2c3e50;
   font-size: 2.5rem;
-  font-weight: 600;
-  color: #076652;
 }
 
-.App-header p {
+.subtitle {
+  color: #666;
   margin: 0.5rem 0 0;
   font-size: 1.2rem;
-  opacity: 0.9;
-  color: #076652;
 }
 
-.App-main {
-  flex: 1;
-  padding: 2rem;
+main {
+  padding: 0 1rem;
   max-width: 1200px;
   margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
-  background-color: white;
 }
 
 .player-settings {

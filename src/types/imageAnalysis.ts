@@ -30,11 +30,14 @@ export interface ClubRecommendation {
 }
 
 export interface ImageAnalysisResult {
-  distance: number;
-  elevation: number;
+  club: string;
   confidence: number;
-  terrain: string;
-  recommendation: ClubRecommendation;
+  distance: number;
+  swingSpeed?: number;
+  trajectory?: {
+    height: 'low' | 'medium' | 'high';
+    shape: 'straight' | 'draw' | 'fade';
+  };
 }
 
 export interface AnalysisParameters {
@@ -61,4 +64,10 @@ export interface TerrainAnalysis {
   type: TerrainType;
   slope: number;
   roughness: number;
+}
+
+export interface AnalysisError {
+  message: string;
+  details?: string;
+  timestamp?: string;
 } 
