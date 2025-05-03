@@ -4,13 +4,18 @@ import { analyzeImage } from '../services/imageAnalysis';
 import { ImageAnalysisResult, AnalysisParameters } from '../types/imageAnalysis';
 import os from 'os';
 import path from 'path';
+import fs from 'fs';
 
 const router = express.Router();
 
 // Configure multer for image upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    const uploadDir = 'uploads';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
