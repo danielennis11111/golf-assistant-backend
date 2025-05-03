@@ -9,9 +9,11 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "express": "latest",
+    "@types/cors": "^2.8.17",
     "@types/express": "latest",
-    "typescript": "latest",
-    "ts-node": "latest"
+    "cors": "^2.8.5",
+    "express": "latest",
+    "ts-node": "latest",
+    "typescript": "latest"
   }
 }
