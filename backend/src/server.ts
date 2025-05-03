@@ -7,14 +7,15 @@ import path from 'path';
 
 // Initialize the Vision API client with credentials from environment variable
 const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '{}');
+console.log('Google Cloud credentials loaded:', !!credentials.private_key);
 const visionClient = new ImageAnnotatorClient({ credentials });
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Configure CORS
+// Configure CORS - temporarily allow all origins for testing
 app.use(cors({
-  origin: ['https://ai-golf-assistant.surge.sh', 'http://localhost:3000'],
+  origin: '*',
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -24,15 +25,30 @@ app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  console.log('Health check requested');
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    port: process.env.PORT,
+    hasCredentials: !!credentials.private_key
+  });
 });
 
 // Image analysis endpoint
 app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
+  console.log('Image analysis requested');
   try {
     if (!req.file) {
+      console.log('No file provided');
       return res.status(400).json({ error: 'No image file provided' });
     }
+
+    console.log('File received:', {
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+      hasBuffer: !!req.file.buffer
+    });
 
     // Perform image analysis using Google Cloud Vision AI
     const [result] = await visionClient.annotateImage({
@@ -42,6 +58,11 @@ app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
         { type: 'OBJECT_LOCALIZATION' },
         { type: 'IMAGE_PROPERTIES' },
       ],
+    });
+
+    console.log('Analysis completed:', {
+      labels: result.labelAnnotations?.length,
+      objects: result.localizedObjectAnnotations?.length
     });
 
     // Extract relevant information from the analysis
