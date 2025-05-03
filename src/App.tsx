@@ -1,5 +1,6 @@
 import React from 'react';
 import ClubSelector from './components/ClubSelector';
+import ImageAnalyzer from './components/ImageAnalyzer';
 import './App.css';
 
 function App() {
@@ -11,6 +12,11 @@ function App() {
       </header>
       <main>
         <ClubSelector />
+        <div className="analysis-section">
+          <h2>Course Analysis</h2>
+          <p className="section-description">Upload a golf course image for AI analysis</p>
+          <ImageAnalyzer />
+        </div>
       </main>
     </div>
   );

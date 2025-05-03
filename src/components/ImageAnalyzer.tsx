@@ -1,30 +1,40 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
 import './ImageAnalyzer.css';
 
-interface ImageAnalysis {
+interface AnalysisResult {
   distance: number;
   terrain: string;
   elevation: number;
   confidence: number;
 }
 
+const API_URL = process.env.REACT_APP_API_URL || 'https://golf-assistant-backend.onrender.com';
+
 const ImageAnalyzer: React.FC = () => {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<ImageAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
     if (file) {
       setImage(file);
       setPreview(URL.createObjectURL(file));
-      setAnalysis(null);
       setError(null);
+      setAnalysis(null);
     }
-  };
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png']
+    },
+    maxFiles: 1
+  });
 
   const analyzeImage = async () => {
     if (!image) return;
@@ -36,94 +46,85 @@ const ImageAnalyzer: React.FC = () => {
       const formData = new FormData();
       formData.append('image', image);
 
-      const response = await fetch('/api/analyze-image', {
+      const response = await fetch(`${API_URL}/api/analyze-image`, {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to analyze image');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to analyze image');
       }
 
       const data = await response.json();
       setAnalysis(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Analysis error:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault();
-  };
-
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setImage(file);
-      setPreview(URL.createObjectURL(file));
-      setAnalysis(null);
-      setError(null);
     }
   };
 
   return (
     <div className="image-analyzer">
       <div
-        className="upload-area"
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        {...getRootProps()}
+        className={`upload-area ${isDragActive ? 'active' : ''}`}
       >
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleImageUpload}
-          accept="image/*"
-          style={{ display: 'none' }}
-        />
+        <input {...getInputProps()} />
         {preview ? (
-          <img src={preview} alt="Preview" className="preview-image" />
+          <div className="preview-container">
+            <img
+              src={preview}
+              alt="Preview"
+              className="preview-image"
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                analyzeImage();
+              }}
+              disabled={loading}
+              className="analyze-button"
+            >
+              {loading ? 'Analyzing...' : 'Analyze Image'}
+            </button>
+          </div>
         ) : (
           <div className="upload-prompt">
-            <p>Drag and drop an image here</p>
-            <p>or click to select a file</p>
+            <p>{isDragActive ? 'Drop the image here' : 'Drag & drop a golf course image here'}</p>
+            <p>or click to select</p>
           </div>
         )}
       </div>
 
-      {preview && (
-        <button
-          className="analyze-button"
-          onClick={analyzeImage}
-          disabled={loading}
-        >
-          {loading ? 'Analyzing...' : 'Analyze Image'}
-        </button>
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
       )}
-
-      {error && <p className="error">{error}</p>}
 
       {analysis && (
         <div className="analysis-results">
           <h3>Analysis Results</h3>
-          <div className="result-item">
-            <span className="label">Distance:</span>
-            <span className="value">{analysis.distance} yards</span>
-          </div>
-          <div className="result-item">
-            <span className="label">Terrain:</span>
-            <span className="value">{analysis.terrain}</span>
-          </div>
-          <div className="result-item">
-            <span className="label">Elevation:</span>
-            <span className="value">{analysis.elevation} feet</span>
-          </div>
-          <div className="result-item">
-            <span className="label">Confidence:</span>
-            <span className="value">{Math.round(analysis.confidence * 100)}%</span>
+          <div className="result-grid">
+            <div className="result-item">
+              <span className="label">Distance to Target</span>
+              <span className="value">{analysis.distance} yards</span>
+            </div>
+            <div className="result-item">
+              <span className="label">Terrain Type</span>
+              <span className="value">{analysis.terrain}</span>
+            </div>
+            <div className="result-item">
+              <span className="label">Elevation Change</span>
+              <span className="value">{analysis.elevation} feet</span>
+            </div>
+            <div className="result-item">
+              <span className="label">Confidence</span>
+              <span className="value">{Math.round(analysis.confidence * 100)}%</span>
+            </div>
           </div>
         </div>
       )}

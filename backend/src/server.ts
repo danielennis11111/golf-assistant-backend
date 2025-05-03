@@ -2,29 +2,41 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import { visionClient } from './config/google-cloud';
+import { ImageAnnotatorClient } from '@google-cloud/vision';
 import path from 'path';
+
+// Initialize the Vision API client with credentials from environment variable
+const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '{}');
+const visionClient = new ImageAnnotatorClient({ credentials });
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.use(cors());
+// Configure CORS
+app.use(cors({
+  origin: ['https://ai-golf-assistant.surge.sh', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Image analysis endpoint
 app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
-      throw new Error('No image file provided');
+      return res.status(400).json({ error: 'No image file provided' });
     }
 
     // Perform image analysis using Google Cloud Vision AI
     const [result] = await visionClient.annotateImage({
-      image: { content: req.file.buffer },
+      image: { content: req.file.buffer.toString('base64') },
       features: [
         { type: 'LABEL_DETECTION' },
         { type: 'OBJECT_LOCALIZATION' },
@@ -41,10 +53,10 @@ app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
     const terrain = analyzeTerrain(labels, objects);
 
     // Estimate distance based on object sizes and positions
-    const distance = estimateDistance(objects, properties);
+    const distance = estimateDistance(objects);
 
     // Estimate elevation based on image perspective
-    const elevation = estimateElevation(objects, properties);
+    const elevation = estimateElevation(properties);
 
     // Calculate confidence score
     const confidence = calculateConfidence(labels, objects);
@@ -57,12 +69,11 @@ app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
     });
   } catch (error) {
     console.error('Error analyzing image:', error);
-    res.status(500).json({ error: error instanceof Error ? error.message : 'An error occurred' });
+    res.status(500).json({ error: 'Failed to analyze image' });
   }
 });
 
 function analyzeTerrain(labels: any[], objects: any[]): string {
-  // Look for specific terrain features
   const terrainKeywords = {
     fairway: ['grass', 'green', 'fairway', 'golf course'],
     rough: ['rough', 'tall grass', 'weeds', 'bush'],
@@ -81,8 +92,7 @@ function analyzeTerrain(labels: any[], objects: any[]): string {
   return 'fairway'; // Default to fairway if no specific terrain is detected
 }
 
-function estimateDistance(objects: any[], properties: any): number {
-  // Use object sizes and positions to estimate distance
+function estimateDistance(objects: any[]): number {
   const golfBall = objects.find(obj => obj.name.toLowerCase().includes('ball'));
   const flag = objects.find(obj => obj.name.toLowerCase().includes('flag'));
 
@@ -104,25 +114,23 @@ function estimateDistance(objects: any[], properties: any): number {
   return 150; // Default distance if no objects are detected
 }
 
-function estimateElevation(objects: any[], properties: any): number {
-  // Use image perspective and object positions to estimate elevation
-  const horizon = properties.dominantColors?.colors?.[0]?.color;
-  if (horizon) {
-    // Use horizon position to estimate elevation
-    const horizonPosition = horizon.red / 255; // Simplified elevation estimation
+function estimateElevation(properties: any): number {
+  const colors = properties.dominantColors?.colors || [];
+  if (colors.length > 0) {
+    // Use the position of dominant colors to estimate elevation
+    const topColor = colors[0].color;
+    const horizonPosition = (topColor.red + topColor.green + topColor.blue) / (255 * 3);
     return Math.round((horizonPosition - 0.5) * 20); // Convert to feet
   }
-
-  return 0; // Default to level if no elevation can be determined
+  return 0;
 }
 
 function calculateConfidence(labels: any[], objects: any[]): number {
-  // Calculate confidence based on the number and relevance of detected features
   const relevantLabels = labels.filter(label => 
     label.description.toLowerCase().includes('golf') ||
     label.description.toLowerCase().includes('course') ||
-    label.description.toLowerCase().includes('ball') ||
-    label.description.toLowerCase().includes('flag')
+    label.description.toLowerCase().includes('grass') ||
+    label.description.toLowerCase().includes('green')
   );
 
   const relevantObjects = objects.filter(obj => 
@@ -131,8 +139,11 @@ function calculateConfidence(labels: any[], objects: any[]): number {
     obj.name.toLowerCase().includes('hole')
   );
 
-  const confidence = (relevantLabels.length + relevantObjects.length) / 10;
-  return Math.min(confidence, 1); // Cap at 100%
+  // Calculate confidence based on number of relevant features detected
+  const labelConfidence = Math.min(relevantLabels.length / 4, 1);
+  const objectConfidence = Math.min(relevantObjects.length / 2, 1);
+
+  return (labelConfidence + objectConfidence) / 2;
 }
 
 const PORT = process.env.PORT || 10000;

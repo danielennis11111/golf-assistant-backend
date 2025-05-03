@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "fabled-decker-458700-r9",
+  "private_key_id": "717596d45345058431f5713222c46fe519231b47",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDBdMH2HNmRClvc\nNNn6Spj0HOeo4vC4lq/N+kKbOYj+3Qn2gVS0ecUcffmLF8BVIW/MGHk5Y/XSazr4\nY+Jnne9gfcKnpouPHEqwxfylalgXI6VKJGyr2KCAvdmm4MGiN+76P6L5Gocm48xq\nNkM/080GRuM9e2YKiBsIOpITdF7RKF81ZXVhzJk86w2EPXYikFJxohfMi4/vKW5S\nUBMZf35i4lp6xF0c+KO3/9EItuCs5hZoIkY8YDwEEnpGyVeGL3OYUReQo211fDJL\nYBnYKA6xD0KCmmNbDIIpMBNlXLkYHbkQw06fjMkHOWuB8xqPILCtGQ7yc74aslVC\nM0Vcl8TNAgMBAAECggEADnS8WrkArAUvZJbhdAHXiKRRTk45CT4fYH+zMvi7azoW\nuMAk1YCk8VJbj6CEe4gOW9y3UEnPMHxZUX7bR/1mChqTrWX1V0oYrbl5vd2ivAXq\nn831fejn437sUPtKFOZjmfkf40fvcgFDQOuRnmckErRA3lMGhsJxbK29xSzkufHO\nNI7d6xdhsdl5tPhYA2Hi9A8yx2G9KGYb64Zg8cv/VrikM0aa6n6uxeobvgM6UniB\na46SWrcHyltX5UTXKetQJCioSxQT8+DY96w4Rbyf2DOB/y/beh8KeFkmrdWeoumK\nbMhQajlwMnNQosYlUucx7ZrDgHzmWgfUIYKL5QpkWQKBgQD0wgrDj+/ZNVjRiOHn\n3qTvSVY8KCdlrUYXxKlaPsDu3LwXfPbw4H0TM4waxR1xPa595ZNx/av1DRXNyZOx\nIi7cJruZwzlY/6lvy2QlYC72ACKK7ykTAv4/k6coYwZMqNF7GJtEZqymc3ks5w39\n2vb+uMowoqXnXtq7tcV62QuamQKBgQDKV30DjX+BCkR8ixvwWJlkBdOcC94ATNNW\nrVBXK78QL4TefEbsmn4jWcNh/d35ty6Bd4PylpVN76y4YCitKN5IkDbP7QwJdXRp\nr1kSQRB4yxh8haMEoDgnMr5Gh2zdIucgRhW1HiHBo/E4k2ewJAQDpK80SingQFW6\npYY4n/7wVQKBgDBrdr+raPKaeCCzqKU7SXvBEVtDQk/+EGDBWhNtWLOoXVl0MlIC\nxxuWVgAxwJpXbn6ffSTO30bSON8GIr6nGYgZ7YEEuwKdSULBhOVT+tZVvn+nwoNt\nUyj2p9n4hRWDTDXC72x/t2YScAVvDDiNKdHIcs9eTd3QyQrbcd7Us1P5AoGANOTh\n/UfECQuSE6yZxR6kGo2bX7OKeTGcHZB47BC3hZemeDKsp7VLPBp/BOLEYD8OnTGN\nAKF0rkb1M82PVJTWZsmsSnaBKwfVQrtf4XG4yJru775PeyoXA8g0DWPhhX1WRg2M\nJyiVUnV03YFLHbSMiBdI5bZtc/3da0lR6QOKNXECgYACIFLzGsZT2K7/KimBz71y\nlVqj7t1l8gGT0hJ/Oa26NHHJOMxFBfRpUoEc1ZD7bwKbQNGbhi1s2j7CStUE6sPY\njuLcUI0ie2cmuz9t1sQHw96kqdawQghUFy5W4Z5UOMztX4gQGD2/KkZNEqwyJJA5\nKw79JSjCDLJdatJ3noBNQA==\n-----END PRIVATE KEY-----\n",
+  "client_email": "golf-assistant@fabled-decker-458700-r9.iam.gserviceaccount.com",
+  "client_id": "101067142628826395623",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/golf-assistant%40fabled-decker-458700-r9.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

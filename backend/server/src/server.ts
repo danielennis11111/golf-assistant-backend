@@ -8,7 +8,14 @@ import path from 'path';
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.use(cors());
+// Configure CORS
+app.use(cors({
+  origin: ['https://ai-golf-assistant.surge.sh', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Health check endpoint
@@ -135,7 +142,7 @@ function calculateConfidence(labels: any[], objects: any[]): number {
   return Math.min(confidence, 1); // Cap at 100%
 }
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 }); 
