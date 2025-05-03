@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { imageAnalysisRouter } from './routes/imageAnalysis.js';
 import dotenv from 'dotenv';
@@ -17,13 +17,16 @@ console.log('Starting server with configuration:', {
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
 
+// Parse allowed origins from environment variable
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'http://localhost:3000',
+  'http://localhost:3002',
+  'https://golf-assistant.surge.sh'
+];
+
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3002',
-    'https://golf-assistant.surge.sh'
-  ],
+  origin: allowedOrigins,
   methods: ['GET', 'POST'],
   credentials: true
 }));
@@ -34,7 +37,7 @@ app.use(express.json());
 app.use('/api/image-analysis', imageAnalysisRouter);
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
   res.json({ 
     status: 'ok',
     environment: process.env.NODE_ENV,
@@ -43,7 +46,7 @@ app.get('/health', (req, res) => {
 });
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Unhandled error:', err);
   res.status(500).json({
     error: 'Internal server error',
@@ -62,8 +65,7 @@ function startServer(): Promise<Server> {
         .listen(port, () => {
           console.log(`Server successfully bound to port ${port}`);
           console.log('Environment:', process.env.NODE_ENV);
-          const corsOptions = app.get('cors');
-          console.log('Allowed origins:', corsOptions ? corsOptions.origin : 'all');
+          console.log('Allowed origins:', allowedOrigins);
           resolve(server);
         })
         .on('error', (error: NodeJS.ErrnoException) => {

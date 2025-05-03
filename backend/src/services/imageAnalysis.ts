@@ -1,21 +1,22 @@
-import vision from '@google-cloud/vision';
+import { ImageAnnotatorClient, protos } from '@google-cloud/vision';
 import { ImageAnalysisResult, TerrainType, AnalysisParameters, PuttingAnalysis } from '../types/imageAnalysis.js';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import sharp from 'sharp';
 import { createCanvas, loadImage, Image } from 'canvas';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Use process.cwd() for the root directory
+const rootDir = process.cwd();
 
-type LocalizedObject = vision.protos.google.cloud.vision.v1.ILocalizedObjectAnnotation;
-type Landmark = vision.protos.google.cloud.vision.v1.IEntityAnnotation;
+type LocalizedObject = protos.google.cloud.vision.v1.ILocalizedObjectAnnotation;
+type Landmark = protos.google.cloud.vision.v1.IEntityAnnotation;
 
 // Initialize the Google Cloud Vision client with credentials
-let visionClient: vision.ImageAnnotatorClient;
+let visionClient: ImageAnnotatorClient | null = null;
 
 async function initializeVisionClient() {
+  if (visionClient) return visionClient;
+
   try {
     console.log('Current NODE_ENV:', process.env.NODE_ENV);
     console.log('Available environment variables:', Object.keys(process.env).filter(key => key.includes('GOOGLE')));
@@ -39,8 +40,9 @@ async function initializeVisionClient() {
       }
 
       console.log('Creating Vision client with project:', credentials.project_id);
-      visionClient = new vision.ImageAnnotatorClient({ credentials });
+      visionClient = new ImageAnnotatorClient({ credentials });
       console.log('Successfully initialized Google Cloud Vision client');
+      return visionClient;
     } catch (parseError) {
       console.error('Error parsing credentials JSON:', parseError);
       if (parseError instanceof SyntaxError) {
@@ -52,15 +54,6 @@ async function initializeVisionClient() {
     console.error('Error initializing Google Cloud Vision client:', error);
     throw error;
   }
-}
-
-// Initialize the client
-try {
-  await initializeVisionClient();
-} catch (error) {
-  console.error('Failed to initialize image analysis service:', error);
-  // Don't throw here, let the service start anyway
-  // Individual requests will fail if they try to use Vision API
 }
 
 function determineTrajectory(
@@ -180,6 +173,15 @@ async function generatePuttingPathImage(
   return outputPath;
 }
 
+// Fix the break intensity factor typing
+const breakIntensityMap = {
+  'slight': 0.1,
+  'moderate': 0.2,
+  'strong': 0.3
+} as const;
+
+type BreakIntensity = keyof typeof breakIntensityMap;
+
 function calculatePuttingPathPoints(
   ballPos: { x: number; y: number },
   holePos: { x: number; y: number },
@@ -193,11 +195,7 @@ function calculatePuttingPathPoints(
   const midY = (start.y + end.y) / 2;
   
   // Adjust break intensity
-  const breakIntensityFactor = {
-    'slight': 0.1,
-    'moderate': 0.2,
-    'strong': 0.3
-  }[analysis.breakLine.intensity];
+  const breakIntensityFactor = breakIntensityMap[analysis.breakLine.intensity as BreakIntensity];
 
   // Calculate distance between points for scaling
   const distance = Math.sqrt(
@@ -477,7 +475,7 @@ export async function analyzeImage(imagePath: string, parameters?: AnalysisParam
       };
 
       console.log('Sending request to Vision API...');
-      const [visionResult] = await visionClient.annotateImage(request);
+      const [visionResult] = await visionClient!.annotateImage(request);
 
       if (!visionResult) {
         throw new Error('No analysis result received from Google Cloud Vision');

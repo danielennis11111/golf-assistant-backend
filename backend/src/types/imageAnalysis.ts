@@ -1,3 +1,4 @@
+// Types for putting analysis
 export interface PuttingAnalysis {
   distance: number;  // Distance in feet
   slope: {
@@ -18,6 +19,7 @@ export interface PuttingAnalysis {
   };
 }
 
+// Types for club recommendations
 export interface ClubRecommendation {
   club: string;
   confidence: number;
@@ -29,6 +31,7 @@ export interface ClubRecommendation {
   puttingAnalysis?: PuttingAnalysis;  // Only present for putting shots
 }
 
+// Main analysis result type
 export interface ImageAnalysisResult {
   distance: number;
   elevation: number;
@@ -37,26 +40,31 @@ export interface ImageAnalysisResult {
   recommendation: ClubRecommendation;
 }
 
+// 3D point type
 export interface Point {
   x: number;
   y: number;
   z: number;
 }
 
+// Depth map type
 export interface DepthMap {
   points: Point[];
   width: number;
   height: number;
 }
 
+// Terrain types
 export type TerrainType = 'flat' | 'rough' | 'hilly' | 'challenging';
 
+// Terrain analysis type
 export interface TerrainAnalysis {
   type: TerrainType;
   slope: number;
   roughness: number;
 }
 
+// Analysis parameters type
 export interface AnalysisParameters {
   age?: number;
   windSpeed?: number;
