@@ -40,6 +40,11 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'healthy' });
+});
+
 // Routes
 app.use('/api/image-analysis', imageAnalysisRouter);
 

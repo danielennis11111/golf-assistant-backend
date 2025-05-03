@@ -3,7 +3,22 @@ import * as tf from '@tensorflow/tfjs-node';
 import sharp from 'sharp';
 import { ImageAnalysisResult, Point, DepthMap, TerrainAnalysis } from '../types/imageAnalysis';
 
-const visionClient = new ImageAnnotatorClient();
+let visionClient: ImageAnnotatorClient;
+
+try {
+  // First try to use application default credentials
+  visionClient = new ImageAnnotatorClient();
+} catch (error) {
+  // If that fails, try to use credentials from environment variables
+  const credentials = process.env.GOOGLE_CLOUD_CREDENTIALS
+    ? JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS)
+    : undefined;
+
+  visionClient = new ImageAnnotatorClient({
+    credentials,
+    projectId: process.env.GOOGLE_CLOUD_PROJECT
+  });
+}
 
 async function estimateDepthMap(imagePath: string): Promise<DepthMap> {
   // Load and preprocess the image

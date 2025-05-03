@@ -1,30 +1,31 @@
-export interface ImageAnalysisResult {
-  distance: number;
-  elevation: number;
-  confidence: number;
-  terrain: TerrainType;
-  recommendation: ClubRecommendation;
-}
-
-export interface Point {
+export type Point = {
   x: number;
   y: number;
   z: number;
-}
+};
 
-export interface DepthMap {
+export type DepthMap = {
   points: Point[];
   width: number;
   height: number;
-}
+};
 
 export type TerrainType = 'flat' | 'rough' | 'hilly' | 'challenging';
 
-export interface TerrainAnalysis {
+export type TerrainAnalysis = {
   type: TerrainType;
   slope: number;
   roughness: number;
-}
+};
+
+export type ImageAnalysisResult = {
+  terrain: TerrainAnalysis;
+  recommendations: {
+    club: string;
+    confidence: number;
+    reasoning: string;
+  };
+};
 
 export interface ClubRecommendation {
   club: string;
