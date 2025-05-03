@@ -12,50 +12,62 @@ type Landmark = vision.protos.google.cloud.vision.v1.IEntityAnnotation;
 
 // Initialize the Google Cloud Vision client with credentials
 let visionClient: vision.ImageAnnotatorClient;
-try {
-  console.log('Current NODE_ENV:', process.env.NODE_ENV);
-  console.log('Available environment variables:', Object.keys(process.env).filter(key => key.includes('GOOGLE')));
-  
-  // Try to use environment variable first, regardless of environment
-  if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-    console.log('Found credentials in environment variable');
-    try {
-      const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-      console.log('Successfully parsed credentials JSON, project_id:', credentials.project_id);
-      visionClient = new vision.ImageAnnotatorClient({ credentials });
-    } catch (parseError) {
-      console.error('Error parsing credentials JSON:', parseError);
-      throw new Error('Failed to parse Google Cloud Vision credentials');
+
+async function initializeVisionClient() {
+  try {
+    console.log('Current NODE_ENV:', process.env.NODE_ENV);
+    console.log('Available environment variables:', Object.keys(process.env).filter(key => key.includes('GOOGLE')));
+
+    let credentials;
+
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+      console.log('Found credentials in environment variable');
+      try {
+        credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+        console.log('Successfully parsed credentials JSON from environment');
+      } catch (parseError) {
+        console.error('Error parsing credentials JSON from environment:', parseError);
+        throw new Error('Failed to parse Google Cloud Vision credentials from environment');
+      }
+    } else if (process.env.NODE_ENV !== 'production') {
+      // Only try local file in non-production environment
+      console.log('Attempting to use local credentials file');
+      const keyFilePath = path.join(__dirname, '../../../server/keys/fabled-decker-458700-r9-717596d45345.json');
+      
+      console.log('Looking for credentials file at:', keyFilePath);
+      if (!fs.existsSync(keyFilePath)) {
+        throw new Error(`Credentials file not found at ${keyFilePath}`);
+      }
+      
+      try {
+        const fileContents = fs.readFileSync(keyFilePath, 'utf8');
+        credentials = JSON.parse(fileContents);
+        console.log('Successfully loaded credentials from file');
+      } catch (fileError) {
+        console.error('Error reading credentials file:', fileError);
+        throw new Error('Failed to read local credentials file');
+      }
+    } else {
+      throw new Error('No credentials found in environment variables or local file');
     }
-  } else if (process.env.NODE_ENV !== 'production') {
-    // Only try local file in non-production environment
-    console.log('Attempting to use local credentials file');
-    const keyFilePath = path.join(__dirname, '../../../server/keys/fabled-decker-458700-r9-717596d45345.json');
-    
-    console.log('Looking for credentials file at:', keyFilePath);
-    if (!fs.existsSync(keyFilePath)) {
-      console.error(`Credentials file not found at ${keyFilePath}`);
-      throw new Error('Google Cloud Vision credentials not found');
+
+    // Verify credentials structure
+    if (!credentials.project_id || !credentials.private_key || !credentials.client_email) {
+      throw new Error('Invalid credentials structure');
     }
-    
-    try {
-      const fileContents = fs.readFileSync(keyFilePath, 'utf8');
-      const credentials = JSON.parse(fileContents);
-      console.log('Successfully loaded credentials from file, project_id:', credentials.project_id);
-      visionClient = new vision.ImageAnnotatorClient({ credentials });
-    } catch (fileError) {
-      console.error('Error reading credentials file:', fileError);
-      throw new Error('Failed to read local credentials file');
-    }
-  } else {
-    throw new Error('No credentials found in environment variables or local file');
+
+    console.log('Creating Vision client with project:', credentials.project_id);
+    visionClient = new vision.ImageAnnotatorClient({ credentials });
+    console.log('Successfully initialized Google Cloud Vision client');
+    return visionClient;
+  } catch (error) {
+    console.error('Error initializing Google Cloud Vision client:', error);
+    throw error;
   }
-  
-  console.log('Successfully initialized Google Cloud Vision client');
-} catch (error) {
-  console.error('Error initializing Google Cloud Vision client:', error);
-  throw new Error('Failed to initialize image analysis service');
 }
+
+// Initialize the client
+await initializeVisionClient();
 
 export async function analyzeImage(imagePath: string, parameters?: AnalysisParameters): Promise<ImageAnalysisResult> {
   try {

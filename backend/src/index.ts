@@ -1,10 +1,10 @@
-import dotenv from 'dotenv';
-// Load environment variables before other imports
-dotenv.config();
-
 import express from 'express';
 import cors from 'cors';
-import { imageAnalysisRouter } from './routes/imageAnalysis';
+import { imageAnalysisRouter } from './routes/imageAnalysis.js';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -14,9 +14,10 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:3002',
-    'https://ai-golf-assistant.surge.sh'
+    'https://golf-assistant.surge.sh'
   ]
 }));
+
 app.use(express.json());
 
 // Routes
@@ -27,6 +28,12 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-}); 
+// Start server
+try {
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+} catch (error) {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+} 
