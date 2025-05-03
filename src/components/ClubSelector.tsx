@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import './ClubSelector.css';
 import { ImageAnalysisResult } from '../types/imageAnalysis';
-import path from 'path';
 
 const API_URL = process.env.NODE_ENV === 'production' 
   ? 'https://golf-assistant-backend.onrender.com'
@@ -216,7 +215,7 @@ export const ClubSelector: React.FC<ClubSelectorProps> = ({
                 {(analysisResult as any).puttingPathImage && (
                   <div className="putting-path-image">
                     <img 
-                      src={`${API_URL}/uploads/${path.basename((analysisResult as any).puttingPathImage)}`}
+                      src={`${API_URL}/uploads/${(analysisResult as any).puttingPathImage.split('/').pop()}`}
                       alt="Recommended putting path"
                       className="path-overlay"
                     />

@@ -19,49 +19,35 @@ async function initializeVisionClient() {
   try {
     console.log('Current NODE_ENV:', process.env.NODE_ENV);
     console.log('Available environment variables:', Object.keys(process.env).filter(key => key.includes('GOOGLE')));
-
-    let credentials;
-
-    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-      console.log('Found credentials in environment variable');
-      try {
-        credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-        console.log('Successfully parsed credentials JSON from environment');
-      } catch (parseError) {
-        console.error('Error parsing credentials JSON from environment:', parseError);
-        throw new Error('Failed to parse Google Cloud Vision credentials from environment');
+    console.log('Credentials present:', !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+    
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+      console.log('No credentials found. If this is production, check Render.com environment variables.');
+      if (process.env.NODE_ENV === 'production') {
+        console.log('Running in production but no credentials found - this is likely a configuration issue.');
       }
-    } else if (process.env.NODE_ENV !== 'production') {
-      // Only try local file in non-production environment
-      console.log('Attempting to use local credentials file');
-      const keyFilePath = path.join(__dirname, '../../../server/keys/fabled-decker-458700-r9-717596d45345.json');
-      
-      console.log('Looking for credentials file at:', keyFilePath);
-      if (!fs.existsSync(keyFilePath)) {
-        throw new Error(`Credentials file not found at ${keyFilePath}`);
-      }
-      
-      try {
-        const fileContents = fs.readFileSync(keyFilePath, 'utf8');
-        credentials = JSON.parse(fileContents);
-        console.log('Successfully loaded credentials from file');
-      } catch (fileError) {
-        console.error('Error reading credentials file:', fileError);
-        throw new Error('Failed to read local credentials file');
-      }
-    } else {
-      throw new Error('No credentials found in environment variables or local file');
+      throw new Error('Google Cloud Vision credentials not found in environment variables');
     }
 
-    // Verify credentials structure
-    if (!credentials.project_id || !credentials.private_key || !credentials.client_email) {
-      throw new Error('Invalid credentials structure');
-    }
+    try {
+      const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+      
+      // Verify credentials structure
+      if (!credentials.project_id || !credentials.private_key || !credentials.client_email) {
+        console.log('Invalid credential structure. Missing required fields.');
+        throw new Error('Invalid credentials structure');
+      }
 
-    console.log('Creating Vision client with project:', credentials.project_id);
-    visionClient = new vision.ImageAnnotatorClient({ credentials });
-    console.log('Successfully initialized Google Cloud Vision client');
-    return visionClient;
+      console.log('Creating Vision client with project:', credentials.project_id);
+      visionClient = new vision.ImageAnnotatorClient({ credentials });
+      console.log('Successfully initialized Google Cloud Vision client');
+    } catch (parseError) {
+      console.error('Error parsing credentials JSON:', parseError);
+      if (parseError instanceof SyntaxError) {
+        console.log('Credentials JSON is malformed. Please check the format in Render.com');
+      }
+      throw new Error('Failed to parse Google Cloud Vision credentials');
+    }
   } catch (error) {
     console.error('Error initializing Google Cloud Vision client:', error);
     throw error;
@@ -69,7 +55,13 @@ async function initializeVisionClient() {
 }
 
 // Initialize the client
-await initializeVisionClient();
+try {
+  await initializeVisionClient();
+} catch (error) {
+  console.error('Failed to initialize image analysis service:', error);
+  // Don't throw here, let the service start anyway
+  // Individual requests will fail if they try to use Vision API
+}
 
 function determineTrajectory(
   distance: number,

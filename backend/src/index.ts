@@ -7,14 +7,15 @@ import { Server } from 'http';
 // Load environment variables
 dotenv.config();
 
+console.log('Starting server with configuration:', {
+  nodeEnv: process.env.NODE_ENV,
+  port: process.env.PORT,
+  hasGoogleCreds: !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON,
+  googleCredsLength: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.length || 0
+});
+
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
-
-console.log('Starting server with configuration:', {
-  port,
-  nodeEnv: process.env.NODE_ENV,
-  currentDir: process.cwd()
-});
 
 // Middleware
 app.use(cors({
@@ -34,7 +35,11 @@ app.use('/api/image-analysis', imageAnalysisRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ 
+    status: 'ok',
+    environment: process.env.NODE_ENV,
+    hasGoogleCreds: !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+  });
 });
 
 // Error handling middleware
