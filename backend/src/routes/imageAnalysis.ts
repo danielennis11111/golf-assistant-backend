@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
-import { analyzeImage } from '../services/imageAnalysis.js';
-import { ImageAnalysisResult, AnalysisParameters } from '../types/imageAnalysis.js';
+import { analyzeImage } from '../services/imageAnalysis';
+import { ImageAnalysisResult, AnalysisParameters } from '../types/imageAnalysis';
 import os from 'os';
 import path from 'path';
 
@@ -10,8 +10,7 @@ const router = express.Router();
 // Configure multer for image upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Use OS temp directory
-    cb(null, os.tmpdir());
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -51,14 +50,7 @@ router.post('/analyze', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'No image file provided' });
     }
 
-    // Parse parameters
-    const parameters: AnalysisParameters = {
-      age: req.body.age ? parseInt(req.body.age) : undefined,
-      windSpeed: req.body.windSpeed ? parseInt(req.body.windSpeed) : undefined,
-      windDirection: req.body.windDirection as 'none' | 'headwind' | 'tailwind' | undefined
-    };
-
-    const result: ImageAnalysisResult = await analyzeImage(req.file.path, parameters);
+    const result = await analyzeImage(req.file.path);
     res.json(result);
   } catch (error) {
     console.error('Error analyzing image:', error);
@@ -66,4 +58,4 @@ router.post('/analyze', upload.single('image'), async (req, res) => {
   }
 });
 
-export const imageAnalysisRouter = router; 
+export default router; 

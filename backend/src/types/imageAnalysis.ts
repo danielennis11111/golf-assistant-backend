@@ -33,11 +33,16 @@ export interface ClubRecommendation {
 
 // Main analysis result type
 export interface ImageAnalysisResult {
-  distance: number;
-  elevation: number;
+  club: string;
   confidence: number;
+  distance: number;
   terrain: string;
-  recommendation: ClubRecommendation;
+  elevation: number;
+  recommendation: {
+    club: string;
+    confidence: number;
+    reasoning: string;
+  };
 }
 
 // 3D point type
